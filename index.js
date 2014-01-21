@@ -1,4 +1,4 @@
 module.exports = {
-	element		: require('./lib/element'),
-	text		: require('./lib/text_node')
+	element		: require('./element'),
+	text		: require('./text_node')
 };

@@ -1,66 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports = {
-	element		: require('./lib/element'),
-	text		: require('./lib/text_node')
-};
-},{"./lib/element":3,"./lib/text_node":5}],2:[function(require,module,exports){
-module.exports = ClassList;
-
-var indexOf = require('indexof');
-
-function ClassList() {
-	this._classes = [];
-}
-
-Object.defineProperty(ClassList.prototype, 'length', {
-	get: function() {
-		return this._classes.length
-	}
-});
-
-ClassList.prototype.set = function(classes) {
-	this._classes = classes.trim().split(/\s+/);
-}
-
-ClassList.prototype.add = function() {
-	"use strict";
-	for (var i = 0; i < arguments.length; ++i) {
-		var c = arguments[i], ix = indexOf(this._classes, c);
-		if (ix < 0) {
-			this._classes.push(c);
-		}
-	}
-}
-
-ClassList.prototype.remove = function() {
-	"use strict";
-	for (var i = 0; i < arguments.length; ++i) {
-		var c = arguments[i], ix = indexOf(this._classes, c);
-		if (ix >= 0) {
-			this._classes.splice(ix, 1);
-		}
-	}
-}
-
-ClassList.prototype.toggle = function(className) {
-	var ix = indexOf(this._classes, className);
-	if (ix < 0) {
-		this._classes.push(className);
-	} else {
-		this._classes.splice(ix, 1);
-	}
-}
-
-ClassList.prototype.contains = function(className) {
-	return indexOf(this._classes, className) >= 0;
-}
-
-ClassList.prototype.toString = function() {
-	return this._classes.join(' ');
-}
-},{"indexof":6}],3:[function(require,module,exports){
 var TextNode 	= require('./text_node'),
-	ClassList 	= require('./class_list');
+	ClassList 	= require('./lib/class_list');
 
 module.exports = Element;
 
@@ -202,7 +142,67 @@ Element.prototype.reify = function(doc) {
 	return el;
 
 }
-},{"./class_list":2,"./node":4,"./text_node":5,"util":11}],4:[function(require,module,exports){
+},{"./lib/class_list":3,"./node":4,"./text_node":7,"util":11}],2:[function(require,module,exports){
+module.exports = {
+	element		: require('./element'),
+	text		: require('./text_node')
+};
+},{"./element":1,"./text_node":7}],3:[function(require,module,exports){
+module.exports = ClassList;
+
+var indexOf = require('indexof');
+
+function ClassList() {
+	this._classes = [];
+}
+
+Object.defineProperty(ClassList.prototype, 'length', {
+	get: function() {
+		return this._classes.length
+	}
+});
+
+ClassList.prototype.set = function(classes) {
+	this._classes = classes.trim().split(/\s+/);
+}
+
+ClassList.prototype.add = function() {
+	"use strict";
+	for (var i = 0; i < arguments.length; ++i) {
+		var c = arguments[i], ix = indexOf(this._classes, c);
+		if (ix < 0) {
+			this._classes.push(c);
+		}
+	}
+}
+
+ClassList.prototype.remove = function() {
+	"use strict";
+	for (var i = 0; i < arguments.length; ++i) {
+		var c = arguments[i], ix = indexOf(this._classes, c);
+		if (ix >= 0) {
+			this._classes.splice(ix, 1);
+		}
+	}
+}
+
+ClassList.prototype.toggle = function(className) {
+	var ix = indexOf(this._classes, className);
+	if (ix < 0) {
+		this._classes.push(className);
+	} else {
+		this._classes.splice(ix, 1);
+	}
+}
+
+ClassList.prototype.contains = function(className) {
+	return indexOf(this._classes, className) >= 0;
+}
+
+ClassList.prototype.toString = function() {
+	return this._classes.join(' ');
+}
+},{"indexof":5}],4:[function(require,module,exports){
 module.exports = Node;
 
 function Node() {
@@ -217,6 +217,42 @@ Node.prototype.isTextNode = function() {
 	return false;
 }
 },{}],5:[function(require,module,exports){
+
+var indexOf = [].indexOf;
+
+module.exports = function(arr, obj){
+  if (indexOf) return arr.indexOf(obj);
+  for (var i = 0; i < arr.length; ++i) {
+    if (arr[i] === obj) return i;
+  }
+  return -1;
+};
+},{}],6:[function(require,module,exports){
+var vdom = require('../');
+
+var COLORS = ['red', 'green', 'blue', 'yellow', 'orange'];
+
+window.init = function() {
+
+	var div = vdom.element('div');
+
+	var h1 = vdom.element('h1', 'Hello World');
+	
+	var ul = vdom.element('ul', [1,2,3,4,5].map(function(num, ix) {
+		var el = vdom.element('li', 'This is item ' + num);
+		el.setStyle('backgroundColor', COLORS[ix]);
+		el.classList.add(['black', 'white'][ix % 2]);
+		el.classList.add(['small', 'medium', 'large'][ix % 3]);
+		return el;
+	}));
+	
+	div.appendChild(h1);
+	div.appendChild(ul);
+
+	document.body.appendChild(div.reify());
+
+}
+},{"../":2}],7:[function(require,module,exports){
 module.exports = TextNode;
 
 function TextNode(content) {
@@ -252,43 +288,7 @@ TextNode.prototype.transform = function(cb) {
 TextNode.prototype.reify = function(doc) {
 	return (doc || document).createTextNode(this.content);
 }
-},{"./node":4,"util":11}],6:[function(require,module,exports){
-
-var indexOf = [].indexOf;
-
-module.exports = function(arr, obj){
-  if (indexOf) return arr.indexOf(obj);
-  for (var i = 0; i < arr.length; ++i) {
-    if (arr[i] === obj) return i;
-  }
-  return -1;
-};
-},{}],7:[function(require,module,exports){
-var vdom = require('../');
-
-var COLORS = ['red', 'green', 'blue', 'yellow', 'orange'];
-
-window.init = function() {
-
-	var div = vdom.element('div');
-
-	var h1 = vdom.element('h1', 'Hello World');
-	
-	var ul = vdom.element('ul', [1,2,3,4,5].map(function(num, ix) {
-		var el = vdom.element('li', 'This is item ' + num);
-		el.setStyle('backgroundColor', COLORS[ix]);
-		el.classList.add(['black', 'white'][ix % 2]);
-		el.classList.add(['small', 'medium', 'large'][ix % 3]);
-		return el;
-	}));
-	
-	div.appendChild(h1);
-	div.appendChild(ul);
-
-	document.body.appendChild(div.reify());
-
-}
-},{"../":1}],8:[function(require,module,exports){
+},{"./node":4,"util":11}],8:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -963,4 +963,4 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-},{"./support/isBuffer":10,"__browserify_process":9,"inherits":8}]},{},[7])
+},{"./support/isBuffer":10,"__browserify_process":9,"inherits":8}]},{},[6])

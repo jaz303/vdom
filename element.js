@@ -1,5 +1,5 @@
 var TextNode 	= require('./text_node'),
-	ClassList 	= require('./class_list');
+	ClassList 	= require('./lib/class_list');
 
 module.exports = Element;
 
