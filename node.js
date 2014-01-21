@@ -5,9 +5,9 @@ function Node() {
 }
 
 Node.prototype.isElement = function() {
-	return false;
+    return false;
 }
 
 Node.prototype.isTextNode = function() {
-	return false;
+    return false;
 }
