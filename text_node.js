@@ -1,21 +1,31 @@
 module.exports = TextNode;
+module.exports.is = isText;
+
+function isText(thing) {
+	return (thing instanceof TextNode);
+}
 
 function TextNode(content) {
 
-    if (!(this instanceof TextNode))
-        return new TextNode(content);
+    if (!isText(this)) return new TextNode(content);
 
-    this.content = content || '';
+    this.content = '' + (content || '');
+
 }
 
 require('util').inherits(TextNode, require('./node'));
 
-TextNode.prototype.isTextNode = function() {
-    return true;
+TextNode.prototype.deepEquals = function(rhs) {
+
+	if (!isText(rhs))
+		return false;
+
+	return this.content === rhs.content;
+
 }
 
 TextNode.prototype.set = function(content) {
-    this.content = content;
+    this.content = '' + (content || '');
 }
 
 TextNode.prototype.get = function() {

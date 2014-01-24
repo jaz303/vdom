@@ -1,109 +1,199 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var TextNode 	= require('./text_node'),
-	ClassList 	= require('./lib/class_list');
-
-module.exports = Element;
+var TextNode    = require('./text_node'),
+    ClassList   = require('./lib/class_list');
 
 // TODO: namespaces (SVG etc)
-// TODO: classes
-// TODO: events
 
+module.exports = Element;
+module.exports.is = isElement;
+
+function isElement(thing) {
+    return (thing instanceof Element);
+}
+
+function objeq(l, r) {
+
+    for (var k in l)
+        if (!(k in r) || l[k] !== r[k])
+            return false;
+
+    for (var k in r)
+        if (!(k in l))
+            return false;
+
+    return true;
+
+}
+
+// TODO: allow dictionary of properties to be passed
 function Element(tagName, children) {
 
-	if (!(this instanceof Element))
-		return new Element(tagName, children);
-	
-	this.tagName = tagName.toLowerCase();
-	this.id = null;
-	this.classList = new ClassList();
-	this.childNodes = []; // readonly
-	this.attributes = {}; // readonly
-	this.styles = {}; // readonly
-	this.parentNode = null; // readonly
+    if (!isElement(this)) return new Element(tagName, children);
+    
+    // (all of these attributes should be treated as read-only)
+    this.id         = null;
+    this.key        = null;
+    this.tagName    = tagName.toLowerCase();
+    this.classList  = new ClassList();
+    this.attributes = {};
+    this.styles     = {};
+    this.childNodes = [];
+    this.parentNode = null;
 
-	if (Array.isArray(children)) {
-		for (var i = 0, l = children.length; i < l; ++i) {
-			this.appendChild(children[i]);
-		}
-	} else if (typeof children === 'string') {
-		this.setTextContent(children);
-	}
+    if (Array.isArray(children)) {
+        for (var i = 0, l = children.length; i < l; ++i) {
+            this.appendChild(children[i]);
+        }
+    } else if (typeof children === 'string') {
+        this.setTextContent(children);
+    }
 
 }
 
 require('util').inherits(Element, require('./node'));
 
-Element.prototype.isElement = function() {
-	return true;
+//
+// Deep Equals - compares everything except the parent
+
+Element.prototype.deepEquals = function(rhs) {
+
+    if (!isElement(rhs))
+        return false;
+
+    if (this.tagName !== rhs.tagName)
+        return false;
+
+    if (!this.classList.equals(rhs.classList))
+        return false;
+
+    if (!objeq(this.attributes) || !objeq(this.styles))
+        return false;
+
+    if (this.childNodes.length !== rhs.childNodes.length)
+        return false;
+
+    for (var i = 0, l = this.childNodes.length; i < l; ++i)
+        if (!this.childNodes[i].deepEquals(rhs.childNodes[i]))
+            return false;
+
+    return true;
+
 }
 
 //
 // Children
 
+// TODO: insertAfter, insertBefore etc
+
 Element.prototype.appendChild = function(child) {
 
-	if (child.parentNode) {
-		child.parentNode.removeChild(child);
-	}
+    if (child.parentNode) {
+        child.parentNode.removeChild(child);
+    }
 
-	this.childNodes.push(child);
-	child.parentNode = this;
+    this.childNodes.push(child);
+    child.parentNode = this;
 
 }
 
 Element.prototype.removeChild = function(child) {
-	for (var i = 0, l = this.childNodes.length; i < l; ++i) {
-		if (this.childNodes[i] === child) {
-			child.parentNode = null;
-			this.childNodes.splice(i, 1);
-			return;
-		}
-	}
+    for (var i = 0, l = this.childNodes.length; i < l; ++i) {
+        if (this.childNodes[i] === child) {
+            child.parentNode = null;
+            this.childNodes.splice(i, 1);
+            return true;
+        }
+    }
+    return false;
+}
+
+Element.prototype.replaceChild = function(oldChild, newChild) {
+    for (var i = 0, l = this.childNodes.length; i < l; ++i) {
+        if (this.childNodes[i] === oldChild) {
+            this.childNodes[i] = newChild;
+            return true;
+        }
+    }
+    return false;
 }
 
 //
 // Attributes
 
 Element.prototype.setAttribute = function(attr, value) {
-	this.attributes[attr] = value;
+    this.attributes[attr] = value;
+
+    if (attr === 'id') {
+        this.id = value;
+    } else if (attr === 'key') {
+        this.key = value;
+    }
 }
 
 Element.prototype.getAttribute = function(attr, defaultValue) {
-	return this.attributes[attr] || defaultValue;
+    return this.attributes[attr] || defaultValue;
 }
 
 Element.prototype.hasAttribute = function(attr) {
-	return attr in this.attributes;
+    return attr in this.attributes;
 }
 
 Element.prototype.removeAttribute = function(attr) {
-	delete this.attributes[attr];
+    delete this.attributes[attr];
+
+    if (attr === 'id') {
+        this.id = null;
+    } else if (attr === 'key') {
+        this.key = null;
+    }
+}
+
+//
+// ID
+
+Element.prototype.getId = function() {
+    return this.getAttribute('id');
+}
+
+Element.prototype.setId = function(id) {
+    return this.setAttribute('id', id);
+}
+
+//
+// Key
+
+Element.prototype.getKey = function() {
+    return this.getAttribute('key');
+}
+
+Element.prototype.setKey = function(key) {
+    return this.setAttribute('key');
 }
 
 //
 // Styles
 
 Element.prototype.setStyle = function(prop, value) {
-	this.styles[prop] = value;
+    this.styles[prop] = value;
 }
 
 Element.prototype.getStyle = function(prop) {
-	return this.styles[prop];
+    return this.styles[prop];
 }
 
 Element.prototype.hasStyle = function(prop) {
-	return prop in this.styles;
+    return prop in this.styles;
 }
 
 Element.prototype.removeStyle = function(prop) {
-	delete this.styles[prop];
+    delete this.styles[prop];
 }
 
 //
 // Text
 
 Element.prototype.setTextContent = function(textContent) {
-	this.childNodes = [new TextNode(textContent)];
+    this.childNodes = [new TextNode(textContent)];
 }
 
 //
@@ -111,41 +201,44 @@ Element.prototype.setTextContent = function(textContent) {
 
 Element.prototype.reify = function(doc) {
 
-	doc = doc || document;
-	
-	var el = doc.createElement(this.tagName);
+    doc = doc || document;
+    
+    var el = doc.createElement(this.tagName);
 
-	el.id = this.id;
+    if (this.attributes) {
+        for (var k in this.attributes) {
+            el.setAttribute(k, this.attributes[k]);
+        }
+    }
 
-	if (this.classList && this.classList.length) {
-		el.className = this.classList.toString();
-	}
+    if (this.classList && this.classList.length) {
+        el.className = this.classList.toString();
+    }
 
-	if (this.attributes) {
-		for (var k in this.attributes) {
-			el.setAttribute(k, this.attributes[k]);
-		}
-	}
+    if (this.styles) {
+        for (var k in this.styles) {
+            el.style[k] = this.styles[k];
+        }
+    }
 
-	if (this.styles) {
-		for (var k in this.styles) {
-			el.style[k] = this.styles[k];
-		}
-	}
+    if (this.childNodes) {
+        for (var i = 0, l = this.childNodes.length; i < l; ++i) {
+            el.appendChild(this.childNodes[i].reify(doc));
+        }
+    }
 
-	if (this.childNodes) {
-		for (var i = 0, l = this.childNodes.length; i < l; ++i) {
-			el.appendChild(this.childNodes[i].reify(doc));
-		}
-	}
-
-	return el;
+    return el;
 
 }
 },{"./lib/class_list":3,"./node":4,"./text_node":7,"util":11}],2:[function(require,module,exports){
+var Element = require('./element'),
+	Text 	= require('./text_node');
+
 module.exports = {
-	element		: require('./element'),
-	text		: require('./text_node')
+    element     : Element,
+    isElement	: Element.is,
+    text        : Text,
+    isText		: Text.is
 };
 },{"./element":1,"./text_node":7}],3:[function(require,module,exports){
 module.exports = ClassList;
@@ -153,54 +246,69 @@ module.exports = ClassList;
 var indexOf = require('indexof');
 
 function ClassList() {
-	this._classes = [];
+    this.length = 0;
+    this._classes = [];
 }
 
-Object.defineProperty(ClassList.prototype, 'length', {
-	get: function() {
-		return this._classes.length
-	}
-});
-
 ClassList.prototype.set = function(classes) {
-	this._classes = classes.trim().split(/\s+/);
+    this._classes = classes.trim().split(/\s+/);
+    this.length = this._classes.length;
 }
 
 ClassList.prototype.add = function() {
-	"use strict";
-	for (var i = 0; i < arguments.length; ++i) {
-		var c = arguments[i], ix = indexOf(this._classes, c);
-		if (ix < 0) {
-			this._classes.push(c);
-		}
-	}
+    "use strict";
+    for (var i = 0; i < arguments.length; ++i) {
+        var c = arguments[i], ix = indexOf(this._classes, c);
+        if (ix < 0) {
+            this._classes.push(c);
+            this.length++;
+        }
+    }
 }
 
 ClassList.prototype.remove = function() {
-	"use strict";
-	for (var i = 0; i < arguments.length; ++i) {
-		var c = arguments[i], ix = indexOf(this._classes, c);
-		if (ix >= 0) {
-			this._classes.splice(ix, 1);
-		}
-	}
+    "use strict";
+    for (var i = 0; i < arguments.length; ++i) {
+        var c = arguments[i], ix = indexOf(this._classes, c);
+        if (ix >= 0) {
+            this._classes.splice(ix, 1);
+            this.length--;
+        }
+    }
 }
 
 ClassList.prototype.toggle = function(className) {
-	var ix = indexOf(this._classes, className);
-	if (ix < 0) {
-		this._classes.push(className);
-	} else {
-		this._classes.splice(ix, 1);
-	}
+    var ix = indexOf(this._classes, className);
+    if (ix < 0) {
+        this._classes.push(className);
+        this.length++;
+    } else {
+        this._classes.splice(ix, 1);
+        this.length--;
+    }
 }
 
 ClassList.prototype.contains = function(className) {
-	return indexOf(this._classes, className) >= 0;
+    return indexOf(this._classes, className) >= 0;
 }
 
 ClassList.prototype.toString = function() {
-	return this._classes.join(' ');
+    return this._classes.join(' ');
+}
+
+ClassList.prototype.equals = function(rhs) {
+    
+    var l = this.length;
+
+    if (l !== rhs.length)
+        return false;
+
+    for (var i = 0; i < l; ++i)
+        if (this._classes[i] !== rhs._classes[i])
+            return false;
+
+    return true;
+
 }
 },{"indexof":5}],4:[function(require,module,exports){
 module.exports = Node;
@@ -209,11 +317,7 @@ function Node() {
 
 }
 
-Node.prototype.isElement = function() {
-	return false;
-}
-
-Node.prototype.isTextNode = function() {
+Node.prototype.deepEquals = function(rhs) {
 	return false;
 }
 },{}],5:[function(require,module,exports){
@@ -254,39 +358,49 @@ window.init = function() {
 }
 },{"../":2}],7:[function(require,module,exports){
 module.exports = TextNode;
+module.exports.is = isText;
+
+function isText(thing) {
+	return (thing instanceof TextNode);
+}
 
 function TextNode(content) {
 
-	if (!(this instanceof TextNode))
-		return new TextNode(content);
+    if (!isText(this)) return new TextNode(content);
 
-	this.content = content || '';
+    this.content = '' + (content || '');
+
 }
 
 require('util').inherits(TextNode, require('./node'));
 
-TextNode.prototype.isTextNode = function() {
-	return true;
+TextNode.prototype.deepEquals = function(rhs) {
+
+	if (!isText(rhs))
+		return false;
+
+	return this.content === rhs.content;
+
 }
 
 TextNode.prototype.set = function(content) {
-	this.content = content;
+    this.content = '' + (content || '');
 }
 
 TextNode.prototype.get = function() {
-	return this.content;
+    return this.content;
 }
 
 TextNode.prototype.append = function(str) {
-	this.content += str;
+    this.content += str;
 }
 
 TextNode.prototype.transform = function(cb) {
-	this.content = cb(this.content);
+    this.content = cb(this.content);
 }
 
 TextNode.prototype.reify = function(doc) {
-	return (doc || document).createTextNode(this.content);
+    return (doc || document).createTextNode(this.content);
 }
 },{"./node":4,"util":11}],8:[function(require,module,exports){
 if (typeof Object.create === 'function') {

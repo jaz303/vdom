@@ -1,4 +1,9 @@
+var Element = require('./element'),
+	Text 	= require('./text_node');
+
 module.exports = {
-    element     : require('./element'),
-    text        : require('./text_node')
+    element     : Element,
+    isElement	: Element.is,
+    text        : Text,
+    isText		: Text.is
 };
