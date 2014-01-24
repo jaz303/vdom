@@ -5,5 +5,5 @@ function Node() {
 }
 
 Node.prototype.deepEquals = function(rhs) {
-	return false;
+    return false;
 }

@@ -2,7 +2,7 @@ module.exports = TextNode;
 module.exports.is = isText;
 
 function isText(thing) {
-	return (thing instanceof TextNode);
+    return (thing instanceof TextNode);
 }
 
 function TextNode(content) {
@@ -17,10 +17,10 @@ require('util').inherits(TextNode, require('./node'));
 
 TextNode.prototype.deepEquals = function(rhs) {
 
-	if (!isText(rhs))
-		return false;
+    if (!isText(rhs))
+        return false;
 
-	return this.content === rhs.content;
+    return this.content === rhs.content;
 
 }
 

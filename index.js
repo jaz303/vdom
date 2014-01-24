@@ -1,9 +1,9 @@
 var Element = require('./element'),
-	Text 	= require('./text_node');
+    Text    = require('./text_node');
 
 module.exports = {
     element     : Element,
-    isElement	: Element.is,
+    isElement   : Element.is,
     text        : Text,
-    isText		: Text.is
+    isText      : Text.is
 };
